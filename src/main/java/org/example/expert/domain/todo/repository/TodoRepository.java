@@ -1,5 +1,6 @@
 package org.example.expert.domain.todo.repository;
 
+import org.example.expert.client.dto.WeatherDto;
 import org.example.expert.domain.todo.entity.Todo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -7,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface TodoRepository extends JpaRepository<Todo, Long> {
@@ -18,4 +21,14 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
             "LEFT JOIN t.user " +
             "WHERE t.id = :todoId")
     Optional<Todo> findByIdWithUser(@Param("todoId") Long todoId);
+
+    // 지정 날씨, 지정된 기간 내에 수정일이 있는 것만 고르기 (선택 사항)
+    @Query("""
+            SELECT t FROM Todo t WHERE (:weather IS NULL OR t.weather = :weather)
+            AND (:start IS NULL OR t.modifiedAt >= :start)
+            AND (:end IS NULL OR t.modifiedAt <= :end)
+            ORDER BY t.modifiedAt DESC""")
+    Page<Todo> searchTodos(
+            Pageable pageable, @Param("weather") String weather,
+            @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }
